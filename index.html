@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediLens - Medication Tracker</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>MediLens</h1>
+      <p class="subtitle">Photo-based medication tracking and scheduling</p>
+      <div id="caregiver-banner" class="caregiver-banner">
+        Viewing as Caretaker for Kenne
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card safety-strip" aria-label="Medication safety alerts">
+        <h2>Safety First</h2>
+        <p class="safety-warning">
+          Never ingest an unknown pill. If a pill cannot be confidently identified, do not take it.
+        </p>
+        <div class="safety-links">
+          <a href="https://safe.pharmacy/drug-disposal/" target="_blank" rel="noreferrer"
+            >Find Disposal Guidelines</a
+          >
+          <a href="tel:911">Emergency: Call 911</a>
+          <a href="tel:18002221222">Poison Control: 1-800-222-1222</a>
+        </div>
+      </section>
+
+      <section id="photo-panel" class="card app-section" data-tab="scan" aria-labelledby="photo-panel-title">
+        <h2 id="photo-panel-title">1. Upload Pill Bottle Photo</h2>
+        <p>
+          Take a clear photo of your prescription label. We will extract medication details
+          and generate a simple plan.
+        </p>
+
+        <label for="pill-image" class="file-label">Choose Photo</label>
+        <input id="pill-image" class="file-input" type="file" accept="image/*" />
+        <button id="camera-capture-button" class="btn-secondary" type="button">
+          Use Camera Capture
+        </button>
+
+        <div id="image-preview-wrap" class="image-preview-wrap hidden">
+          <img id="image-preview" alt="Preview of selected pill bottle photo" />
+        </div>
+
+        <div class="actions">
+          <button id="analyze-button" class="btn-primary" type="button">Analyze Label</button>
+          <button id="scan-shape-toggle-bottle" class="btn-secondary" type="button">
+            Switch to Loose Pill Scan
+          </button>
+          <button id="manual-add-button" class="btn-secondary" type="button">
+            Add Medication Manually
+          </button>
+          <button id="reset-button" class="btn-secondary" type="button">Reset</button>
+        </div>
+
+        <p id="status-message" class="status-message" aria-live="polite">
+          Waiting for photo...
+        </p>
+
+        <div id="manual-entry-panel" class="manual-entry-panel hidden" aria-live="polite">
+          <h3>Manual Medication Entry</h3>
+          <p class="helper-text">Add a medication name and pick a time without typing.</p>
+
+          <label for="manual-entry-name">Medication name</label>
+          <input
+            id="manual-entry-name"
+            class="text-input"
+            type="text"
+            placeholder="e.g., Metformin"
+            autocomplete="off"
+          />
+
+          <label>Time to take</label>
+          <div class="time-picker-row">
+            <select id="manual-time-hour" class="time-select" aria-label="Hour"></select>
+            <span class="time-separator">:</span>
+            <select id="manual-time-minute" class="time-select" aria-label="Minute"></select>
+            <select id="manual-time-period" class="time-select" aria-label="AM or PM"></select>
+          </div>
+
+          <label class="toggle-label" for="manual-no-time">
+            <input id="manual-no-time" type="checkbox" />
+            No specific time
+          </label>
+
+          <div class="actions">
+            <button id="save-manual-entry-button" class="btn-primary" type="button">
+              Save Manual Entry
+            </button>
+            <button id="cancel-manual-entry-button" class="btn-secondary" type="button">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <div id="verification-panel" class="verification-panel hidden" aria-live="polite">
+          <h3>Verification Needed</h3>
+          <p id="verification-message" class="helper-text">
+            We are not fully certain about the medication name.
+          </p>
+
+          <p><strong>Detected Name:</strong> <span id="detected-med-name">-</span></p>
+
+          <label for="manual-med-name">Enter medication name manually</label>
+          <input
+            id="manual-med-name"
+            class="text-input"
+            type="text"
+            placeholder="e.g., Metformin"
+            autocomplete="off"
+          />
+
+          <div class="actions">
+            <button id="use-detected-button" class="btn-secondary" type="button">
+              Use Detected Name
+            </button>
+            <button id="use-manual-button" class="btn-primary" type="button">
+              Use Manual Name
+            </button>
+            <button id="retake-photo-button" class="btn-secondary" type="button">
+              Retake Photo
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="identify-panel" class="card app-section" data-tab="scan" aria-labelledby="identify-panel-title">
+        <h2 id="identify-panel-title">Identify Random Pill</h2>
+        <p>
+          Upload or capture a loose-pill photo to identify it. Do not ingest pills until confirmed.
+        </p>
+        <label for="identify-pill-image" class="file-label">Choose Pill Photo</label>
+        <input id="identify-pill-image" class="file-input" type="file" accept="image/*" />
+        <button id="identify-camera-button" class="btn-secondary" type="button">
+          Capture Loose Pill
+        </button>
+        <div class="scan-interface" aria-label="Camera scan viewfinder">
+          <div class="scan-shade"></div>
+          <div id="scan-guide" class="scan-guide"></div>
+          <div class="scan-overlay-controls">
+            <button id="flashlight-button" class="btn-secondary flash-button hidden" type="button">
+              Turn on Flashlight
+            </button>
+            <button id="scan-shape-toggle" class="btn-secondary" type="button">
+              Switch to Loose Pill Scan
+            </button>
+          </div>
+        </div>
+        <div id="scan-processing" class="scan-processing hidden" aria-label="Scanning in progress"></div>
+        <article id="identify-result" class="info-block hidden" aria-live="polite">
+          <h3>Identification Result</h3>
+          <p><strong>Name:</strong> <span id="identified-pill-name">-</span></p>
+          <p><strong>Intended Use:</strong> <span id="identified-pill-use">-</span></p>
+          <p><strong>Confidence:</strong> <span id="identified-pill-confidence">-</span></p>
+        </article>
+      </section>
+
+      <section id="today-panel" class="card app-section" data-tab="today" aria-labelledby="today-panel-title">
+        <h2 id="today-panel-title">Today Dashboard</h2>
+        <div class="today-header">
+          <div>
+            <p class="helper-text">Hello, Kenne</p>
+            <p id="today-date" class="today-date"></p>
+          </div>
+          <div id="today-progress-ring" class="progress-ring" aria-label="Daily completion progress"></div>
+        </div>
+        <p class="helper-text">See what is due now, next, and completed in a timeline by day period.</p>
+        <div id="today-timeline" class="today-timeline" aria-live="polite"></div>
+      </section>
+
+      <section
+        id="summary-panel"
+        class="card app-section hidden"
+        data-tab="scan"
+        aria-labelledby="summary-panel-title"
+      >
+        <h2 id="summary-panel-title">2. Medication Summary Dashboard</h2>
+        <img id="summary-hero-image" class="summary-hero-image" alt="Latest scanned pill or bottle photo" />
+        <div id="summary-safety-banner" class="safety-banner"></div>
+
+        <div class="summary-grid">
+          <article class="info-block">
+            <h3>Medication Details</h3>
+            <p><strong>Name:</strong> <span id="med-name">-</span></p>
+            <p><strong>Dosage:</strong> <span id="med-dosage">-</span></p>
+            <p><strong>Instructions:</strong> <span id="med-schedule-text">-</span></p>
+          </article>
+
+          <article class="info-block summary-headings">
+            <h3>AI Summary</h3>
+            <strong>What it is</strong>
+            <p id="med-summary">-</p>
+            <strong>How to take it</strong>
+            <p id="med-schedule-text-copy">-</p>
+            <strong>Side Effects</strong>
+            <p id="med-side-effects-copy">-</p>
+          </article>
+
+          <article class="info-block">
+            <h3>Common Side Effects</h3>
+            <ul id="med-side-effects" class="pill-list"></ul>
+          </article>
+
+          <article class="warning-block" aria-label="Important warnings">
+            <h3>What NOT To Do</h3>
+            <ul id="med-warnings" class="pill-list"></ul>
+          </article>
+        </div>
+
+        <article class="info-block">
+          <h3>Smart Schedule</h3>
+          <p class="helper-text">
+            Auto-generated schedule from label instructions:
+            <span id="schedule-summary">-</span>
+          </p>
+          <div class="week-nav" role="group" aria-label="Week navigation">
+            <button id="prev-week-button" class="btn-secondary" type="button">
+              Last Week
+            </button>
+            <div class="week-label-wrap">
+              <div id="week-label" class="week-label">Week</div>
+            </div>
+            <button id="next-week-button" class="btn-secondary" type="button">
+              Next Week
+            </button>
+          </div>
+
+          <div id="week-calendar" class="week-calendar" aria-live="polite"></div>
+        </article>
+
+        <div class="actions">
+          <button id="save-medication-button" class="btn-primary" type="button">
+            Save Medication
+          </button>
+          <button id="add-another-button" class="btn-secondary" type="button">
+            Add Another Medication
+          </button>
+          <button id="export-ics-button" class="btn-primary" type="button">
+            Export to Calendar (.ics)
+          </button>
+          <button id="sync-google-button" class="btn-secondary" type="button">
+            Sync with Google Calendar
+          </button>
+          <button id="sync-apple-button" class="btn-secondary" type="button">
+            Sync with Apple Calendar
+          </button>
+          <button id="add-to-schedule-button" class="btn-primary" type="button">
+            Add to Schedule
+          </button>
+        </div>
+
+        <article id="overall-summary-panel" class="info-block overall-summary">
+          <h3>Overall Summary</h3>
+          <p>
+            <strong>Total Saved Medications:</strong>
+            <span id="overall-count">0</span>
+          </p>
+          <p><strong>Saved Names:</strong> <span id="overall-names">None yet</span></p>
+          <p><strong>Total Scheduled Doses:</strong> <span id="overall-doses">0</span></p>
+          <h4>Combined What NOT To Do</h4>
+          <ul id="overall-warnings" class="pill-list"></ul>
+        </article>
+      </section>
+
+      <section class="card app-section" data-tab="health" aria-labelledby="caregiver-title">
+        <h2 id="caregiver-title">Caregiver Portal</h2>
+        <p class="helper-text">
+          Share schedule and adherence logs with caregivers or clinicians.
+        </p>
+        <label for="caregiver-access-level">Access level</label>
+        <select id="caregiver-access-level" class="text-input">
+          <option value="read">Read-only</option>
+          <option value="edit">Edit access</option>
+        </select>
+        <div class="actions">
+          <button id="generate-caregiver-link" class="btn-primary" type="button">
+            Generate Share Link
+          </button>
+        </div>
+        <p id="caregiver-link-output" class="helper-text">No link generated yet.</p>
+      </section>
+
+      <section class="card app-section" data-tab="health" aria-labelledby="notifications-title">
+        <h2 id="notifications-title">Notifications & Alerts</h2>
+        <div class="summary-grid">
+          <article class="info-block">
+            <h3>Notification Preferences</h3>
+            <label for="alert-sound">Alert sound</label>
+            <select id="alert-sound" class="text-input">
+              <option value="calm">Calm</option>
+              <option value="urgent">Urgent</option>
+            </select>
+            <label for="quiet-hours-start">Quiet hours start</label>
+            <input id="quiet-hours-start" class="text-input" type="time" value="22:00" />
+            <label for="quiet-hours-end">Quiet hours end</label>
+            <input id="quiet-hours-end" class="text-input" type="time" value="07:00" />
+            <label class="toggle-label" for="quiet-hours-nonessential">
+              <input id="quiet-hours-nonessential" type="checkbox" checked />
+              Apply quiet hours to vitamins/supplements only
+            </label>
+          </article>
+          <article class="info-block">
+            <h3>Accessibility</h3>
+            <label for="dynamic-type-size">Text size</label>
+            <input id="dynamic-type-size" type="range" min="100" max="150" value="100" />
+            <p class="helper-text">Current scale: <span id="dynamic-type-value">100%</span></p>
+            <label for="med-color-picker">Medication color coding</label>
+            <input id="med-color-picker" class="text-input" type="color" value="#22c55e" />
+          </article>
+        </div>
+        <article class="info-block">
+          <h3>Notification Center</h3>
+          <div id="notification-center" class="notification-center"></div>
+        </article>
+        <article class="info-block">
+          <h3>Monthly Adherence</h3>
+          <div id="month-calendar" class="month-calendar" aria-live="polite"></div>
+        </article>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <button id="tab-today" class="nav-tab" aria-current="page" type="button">
+        <span class="nav-icon">🏠</span>
+        <span>Today</span>
+      </button>
+      <button id="tab-scan" class="nav-tab" type="button">
+        <span class="nav-icon">📷</span>
+        <span>Scan</span>
+      </button>
+      <button id="tab-health" class="nav-tab" type="button">
+        <span class="nav-icon">💙</span>
+        <span>My Health</span>
+      </button>
+    </nav>
+
+    <script>
+      // Set this to your deployed backend URL in production.
+      // Keep localhost for local development.
+      window.MEDILENS_API_BASE_URL = "http://localhost:3001";
+    </script>
+    <script src="./app.js"></script>
+  </body>
+</html>
